@@ -1,0 +1,277 @@
+/* Memory Card Game - Responsive Styles */
+
+/* Mobile Devices */
+@media (max-width: 768px) {
+    .game-title, .main-title {
+        font-size: 1.8em;
+    }
+    
+    .game-stats {
+        gap: 15px;
+    }
+
+    .revealed-cards {
+        gap: 6px;
+        min-height: 50px;
+        padding: 6px;
+    }
+
+    .revealed-card {
+        width: 35px;
+        height: 49px;
+        font-size: 0.7em;
+    }
+
+    .game-board {
+        gap: 6px;
+        padding: 12px;
+    }
+
+    .game-board.portrait {
+        max-height: calc(100vh - 360px);
+    }
+
+    .game-board.landscape {
+        max-height: calc(100vh - 280px);
+    }
+
+    .card {
+        border-radius: 6px;
+        width: clamp(40px, 10vmin, 60px);
+        height: clamp(60px, 15vmin, 90px);
+    }
+
+    .menu-buttons {
+        max-width: 250px;
+    }
+
+    .menu-btn {
+        padding: 12px 25px;
+        font-size: 1.1em;
+    }
+
+    .main-title {
+        font-size: 3em;
+    }
+
+    .menu-subtitle {
+        font-size: 1em;
+    }
+}
+
+/* Landscape Orientation on Short Screens */
+@media (orientation: landscape) and (max-height: 600px) {
+    .game-header {
+        padding: 5px;
+    }
+    
+    .game-title {
+        font-size: 1.5em;
+        margin-bottom: 5px;
+    }
+    
+    .revealed-cards-section {
+        margin-bottom: 8px;
+    }
+    
+    .revealed-title {
+        font-size: 0.9em;
+        margin-bottom: 5px;
+    }
+    
+    .revealed-cards {
+        min-height: 45px;
+        padding: 5px;
+    }
+    
+    .revealed-card {
+        width: 30px;
+        height: 42px;
+        font-size: 0.6em;
+    }
+    
+    .game-stats {
+        margin-bottom: 8px;
+        gap: 15px;
+    }
+    
+    .stat {
+        padding: 6px 12px;
+    }
+    
+    .stat-label {
+        font-size: 0.7em;
+    }
+    
+    .stat-value {
+        font-size: 1em;
+    }
+    
+    .controls {
+        margin-top: 8px;
+        padding: 5px;
+    }
+    
+    .btn {
+        padding: 8px 16px;
+        font-size: 0.8em;
+    }
+    
+    .game-board {
+        padding: 10px;
+        gap: 5px;
+    }
+
+    .game-board.portrait {
+        max-height: calc(100vh - 220px);
+    }
+
+    .game-board.landscape {
+        max-height: calc(100vh - 200px);
+    }
+
+    .card {
+        width: clamp(35px, 8vmin, 50px);
+        height: clamp(52px, 12vmin, 75px);
+        font-size: clamp(0.8rem, 2vmin, 1.2rem);
+    }
+
+    .main-title {
+        font-size: 2.5em;
+    }
+
+    .menu-subtitle {
+        font-size: 1em;
+        margin-bottom: 25px;
+    }
+
+    .menu-buttons {
+        gap: 15px;
+    }
+
+    .menu-btn {
+        padding: 12px 25px;
+        font-size: 1em;
+    }
+}
+
+/* Very Small Screens */
+@media (max-width: 480px) {
+    .game-title {
+        font-size: 1.6em;
+    }
+
+    .main-title {
+        font-size: 2.8em;
+    }
+
+    .game-stats {
+        gap: 10px;
+    }
+
+    .stat {
+        padding: 6px 12px;
+    }
+
+    .stat-label {
+        font-size: 0.7em;
+    }
+
+    .stat-value {
+        font-size: 1.1em;
+    }
+
+    .revealed-card {
+        width: 32px;
+        height: 45px;
+        font-size: 0.65em;
+    }
+
+    .card {
+        width: clamp(35px, 9vmin, 55px);
+        height: clamp(52px, 13.5vmin, 82px);
+    }
+
+    .menu-btn {
+        padding: 10px 20px;
+        font-size: 1em;
+    }
+
+    .game-board.portrait {
+        max-height: calc(100vh - 380px);
+    }
+
+    .game-board.landscape {
+        max-height: calc(100vh - 300px);
+    }
+}
+
+/* Large Screens */
+@media (min-width: 1200px) {
+    .main-title {
+        font-size: 5em;
+    }
+
+    .game-title {
+        font-size: 2.5em;
+    }
+
+    .menu-subtitle {
+        font-size: 1.3em;
+    }
+
+    .menu-btn {
+        font-size: 1.3em;
+        padding: 18px 35px;
+    }
+
+    .card {
+        width: clamp(60px, 12vmin, 100px);
+        height: clamp(90px, 18vmin, 150px);
+        font-size: clamp(1.2rem, 2.5vmin, 2.5rem);
+    }
+
+    .revealed-card {
+        width: 50px;
+        height: 70px;
+        font-size: 0.9em;
+    }
+
+    .game-board {
+        gap: 12px;
+        padding: 20px;
+    }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .card {
+        /* Larger touch targets on touch devices */
+        min-width: 45px;
+        min-height: 67px;
+    }
+
+    .btn, .menu-btn {
+        /* Larger button touch targets */
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .card:hover {
+        /* Disable hover effects on touch devices */
+        transform: none;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .btn:hover, .menu-btn:hover {
+        transform: none;
+    }
+}
+
+/* High DPI Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .card {
+        /* Sharper text rendering on high DPI displays */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }

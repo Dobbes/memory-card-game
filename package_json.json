@@ -1,0 +1,100 @@
+{
+  "name": "memory-card-game",
+  "version": "1.0.0",
+  "description": "Classic memory card game with playing cards - cross-platform compatible",
+  "main": "electron/main.js",
+  "homepage": "./",
+  "author": {
+    "name": "Memory Game Developer",
+    "email": "developer@example.com"
+  },
+  "license": "MIT",
+  "keywords": [
+    "memory",
+    "card",
+    "game",
+    "puzzle",
+    "brain-training",
+    "javascript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/memory-card-game.git"
+  },
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win",
+    "build-mac": "electron-builder --mac",
+    "build-linux": "electron-builder --linux",
+    "dist": "electron-builder --publish=never",
+    "pack": "electron-builder --dir",
+    "serve": "npx http-server . -p 8080",
+    "cordova-prepare": "cordova prepare",
+    "cordova-build-android": "cordova build android",
+    "cordova-run-android": "cordova run android"
+  },
+  "build": {
+    "appId": "com.memorygame.app",
+    "productName": "Memory Card Game",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "index.html",
+      "css/**/*",
+      "js/**/*",
+      "assets/**/*",
+      "electron/**/*",
+      "manifest.json",
+      "sw.js"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icons/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icons/icon.icns",
+      "category": "public.app-category.games"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icons/icon.png",
+      "category": "Game"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "cordova": {
+    "platforms": [
+      "android",
+      "ios"
+    ],
+    "plugins": {
+      "cordova-plugin-device": {},
+      "cordova-plugin-splashscreen": {},
+      "cordova-plugin-statusbar": {},
+      "cordova-plugin-whitelist": {}
+    }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
+}
