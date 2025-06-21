@@ -1,8 +1,57 @@
 /**
- * Memory Card Game - Main Game Logic
- * Handles game state, card management, and game mechanics
+ * Memory Card Game - Complete JavaScript
+ * 90's Capcom Street Fighter Arcade Style
  */
 
+// Memory Card Game - Utility Functions
+const STORAGE_KEY = 'memoryGameHistory';
+
+function getGameHistory() {
+    try {
+        const history = localStorage.getItem(STORAGE_KEY);
+        return history ? JSON.parse(history) : [];
+    } catch (error) {
+        console.error('Error reading game history:', error);
+        return [];
+    }
+}
+
+function saveGameHistory(history) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    } catch (error) {
+        console.error('Error saving game history:', error);
+    }
+}
+
+function clearGameHistory() {
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+        console.error('Error clearing game history:', error);
+    }
+}
+
+function calculateStats(history) {
+    if (!history || history.length === 0) {
+        return {
+            totalGames: 0,
+            averageFlips: 0,
+            totalFlips: 0
+        };
+    }
+    
+    const totalGames = history.length;
+    const totalFlips = history.reduce((sum, game) => sum + game.flips, 0);
+    
+    return {
+        totalGames,
+        averageFlips: Math.round(totalFlips / totalGames),
+        totalFlips
+    };
+}
+
+// Memory Card Game - Main Game Logic
 class MemoryGame {
     constructor() {
         this.boardWidth = 4;
@@ -10,14 +59,13 @@ class MemoryGame {
         this.isLandscape = false;
         this.cards = [];
         this.flippedCards = [];
-        this.revealedPairs = new Set(); // Track pairs where both cards have been seen
-        this.seenCardPositions = new Set(); // Track card positions that have been flipped
+        this.revealedPairs = new Set();
+        this.seenCardPositions = new Set();
         this.matchedPairs = 0;
         this.flips = 0;
         this.misses = 0;
-        this.gameActive = true;
+        this.gameActive = false; // Start disabled until intro finishes
         
-        // Card deck setup
         this.suits = ['♠', '♥', '♦', '♣'];
         this.values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
         this.suitClasses = ['suit-spade', 'suit-heart', 'suit-diamond', 'suit-club'];
@@ -25,12 +73,50 @@ class MemoryGame {
         this.checkOrientation();
     }
     
-    /**
-     * Check screen orientation and adjust board dimensions
-     */
+    showIntroSequence() {
+        const messages = ['LEVEL 1', 'FIND MATCHING CARDS', 'GO!'];
+        let currentMessage = 0;
+        
+        // Create intro overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'intro-overlay';
+        overlay.textContent = messages[currentMessage];
+        document.body.appendChild(overlay);
+        
+        // Disable game interaction
+        this.gameActive = false;
+        
+        const showNextMessage = () => {
+            currentMessage++;
+            if (currentMessage < messages.length) {
+                // Fade out current message
+                overlay.classList.add('fadeout');
+                
+                setTimeout(() => {
+                    // Show next message
+                    overlay.classList.remove('fadeout');
+                    overlay.textContent = messages[currentMessage];
+                    setTimeout(showNextMessage, 1200); // Show each message for 1.2 seconds
+                }, 500);
+            } else {
+                // Final fade out and start game
+                overlay.classList.add('fadeout');
+                setTimeout(() => {
+                    document.body.removeChild(overlay);
+                    // Enable game interaction and start actual game
+                    this.gameActive = true;
+                    this.reset();
+                }, 500);
+            }
+        };
+        
+        // Start the sequence
+        setTimeout(showNextMessage, 1200);
+    }
+    
     checkOrientation() {
         const aspectRatio = window.innerWidth / window.innerHeight;
-        this.isLandscape = aspectRatio > 1.2; // More horizontal than vertical
+        this.isLandscape = aspectRatio > 1.2;
         
         if (this.isLandscape) {
             this.boardWidth = 5;
@@ -41,9 +127,6 @@ class MemoryGame {
         }
     }
     
-    /**
-     * Initialize the game
-     */
     initializeGame() {
         this.checkOrientation();
         this.createCardPairs();
@@ -53,15 +136,11 @@ class MemoryGame {
         this.clearRevealedCards();
     }
     
-    /**
-     * Create pairs of cards for the game
-     */
     createCardPairs() {
         this.cards = [];
         const totalCards = this.boardWidth * this.boardHeight;
         const pairsNeeded = totalCards / 2;
         
-        // Create pairs of cards
         for (let i = 0; i < pairsNeeded; i++) {
             const suit = this.suits[i % this.suits.length];
             const value = this.values[Math.floor(i / this.suits.length) % this.values.length];
@@ -76,15 +155,11 @@ class MemoryGame {
                 isMatched: false
             };
             
-            // Add two identical cards (a pair)
             this.cards.push({...cardData, uniqueId: i * 2});
             this.cards.push({...cardData, uniqueId: i * 2 + 1});
         }
     }
     
-    /**
-     * Shuffle the cards array using Fisher-Yates algorithm
-     */
     shuffleCards() {
         for (let i = this.cards.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -92,14 +167,10 @@ class MemoryGame {
         }
     }
     
-    /**
-     * Render the game board with cards
-     */
     renderBoard() {
         const board = document.getElementById('gameBoard');
         board.innerHTML = '';
         
-        // Set grid layout based on orientation
         if (this.isLandscape) {
             board.className = 'game-board landscape';
         } else {
@@ -115,47 +186,31 @@ class MemoryGame {
         });
     }
     
-    /**
-     * Clear revealed cards display
-     */
     clearRevealedCards() {
         this.revealedPairs.clear();
         this.seenCardPositions.clear();
         document.getElementById('revealedCards').innerHTML = '';
     }
     
-    /**
-     * Flip a card at the given index
-     * @param {number} index - The index of the card to flip
-     */
     flipCard(index) {
         if (!this.gameActive) return;
         
         const card = this.cards[index];
         const cardElement = document.querySelector(`[data-index="${index}"]`);
         
-        // Can't flip if already flipped or matched
         if (card.isFlipped || card.isMatched) return;
-        
-        // Can't flip more than 2 cards at once
         if (this.flippedCards.length >= 2) return;
         
-        // Track that this position has been flipped
         this.seenCardPositions.add(index);
-        
-        // Check if this completes a revealed pair
         this.checkForNewRevealedPair(card);
         
-        // Flip the card
         card.isFlipped = true;
         this.flippedCards.push(index);
         this.flips++;
         
-        // Show the card face
         cardElement.className = `card flipped ${card.suitClass}`;
         cardElement.innerHTML = `${card.value}${card.suit}`;
         
-        // Check for match if two cards are flipped
         if (this.flippedCards.length === 2) {
             setTimeout(() => this.checkMatch(), 1000);
         }
@@ -163,17 +218,11 @@ class MemoryGame {
         this.updateStats();
     }
     
-    /**
-     * Check if a new pair has been fully revealed
-     * @param {Object} card - The card that was just flipped
-     */
     checkForNewRevealedPair(card) {
         const pairId = card.id;
         
-        // If this pair is already revealed, don't check again
         if (this.revealedPairs.has(pairId)) return;
         
-        // Find all positions of cards with this pair ID
         const positionsOfThisPair = [];
         this.cards.forEach((c, index) => {
             if (c.id === pairId) {
@@ -181,12 +230,10 @@ class MemoryGame {
             }
         });
         
-        // Check if ALL positions of this pair have been seen
         const allPositionsFlipped = positionsOfThisPair.every(pos => 
             this.seenCardPositions.has(pos)
         );
         
-        // If both positions of this pair have been flipped, add to revealed pairs
         if (allPositionsFlipped) {
             this.revealedPairs.add(pairId);
             
@@ -198,9 +245,6 @@ class MemoryGame {
         }
     }
     
-    /**
-     * Check if the two flipped cards match
-     */
     checkMatch() {
         const [firstIndex, secondIndex] = this.flippedCards;
         const firstCard = this.cards[firstIndex];
@@ -209,7 +253,6 @@ class MemoryGame {
         const secondElement = document.querySelector(`[data-index="${secondIndex}"]`);
         
         if (firstCard.id === secondCard.id) {
-            // Match found!
             firstCard.isMatched = true;
             secondCard.isMatched = true;
             firstElement.className += ' matched';
@@ -217,21 +260,16 @@ class MemoryGame {
             
             this.matchedPairs++;
             
-            // Check if game is complete
             if (this.matchedPairs === (this.boardWidth * this.boardHeight) / 2) {
-                setTimeout(() => this.gameComplete(), 2000); // Wait for animation
+                setTimeout(() => this.gameComplete(), 2000);
             }
         } else {
-            // No match - check if this should count as a miss
-            // Only count as miss if this pair was ALREADY revealed before this attempt
             const pairId = firstCard.id;
             
-            // Check if pair was already in revealed pairs before this flip attempt
             if (this.revealedPairs.has(pairId)) {
                 this.misses++;
             }
             
-            // Flip cards back
             firstCard.isFlipped = false;
             secondCard.isFlipped = false;
             firstElement.className = 'card back';
@@ -244,53 +282,122 @@ class MemoryGame {
         this.updateStats();
     }
     
-    /**
-     * Update the statistics display
-     */
     updateStats() {
-        const efficiency = this.flips > 0 ? Math.round((this.matchedPairs * 2 / this.flips) * 100) : 100;
-        
         document.getElementById('flips').textContent = this.flips;
         document.getElementById('misses').textContent = this.misses;
-        document.getElementById('efficiency').textContent = efficiency + '%';
     }
     
-    /**
-     * Handle game completion
-     */
     gameComplete() {
         this.gameActive = false;
-        const efficiency = Math.round((this.matchedPairs * 2 / this.flips) * 100);
         
-        // Save to history
-        this.saveToHistory(efficiency);
+        // Start fireworks animation
+        this.startFireworks();
         
-        document.getElementById('finalStats').innerHTML = `
-            <div><strong>Total Flips:</strong> ${this.flips}</div>
-            <div><strong>Missed Matches:</strong> ${this.misses}</div>
-            <div><strong>Efficiency:</strong> ${efficiency}%</div>
-        `;
+        this.saveToHistory();
         
-        document.getElementById('gameOver').style.display = 'flex';
+        // Show completion modal after shorter delay
+        setTimeout(() => {
+            document.getElementById('finalStats').innerHTML = `
+                <div><strong>Total Flips:</strong> ${this.flips}</div>
+                <div><strong>Missed Matches:</strong> ${this.misses}</div>
+            `;
+            
+            document.getElementById('gameOver').style.display = 'flex';
+        }, 2000); // Reduced to 2 seconds so you can interact sooner
     }
     
-    /**
-     * Save game statistics to history
-     * @param {number} efficiency - The efficiency percentage
-     */
-    saveToHistory(efficiency) {
+    startFireworks() {
+        const fireworksContainer = document.createElement('div');
+        fireworksContainer.className = 'fireworks';
+        document.body.appendChild(fireworksContainer);
+        
+        // Arcade-style colors: blue, red, white, green
+        const colors = ['#00a2ff', '#ff5757', '#ffffff', '#4CAF50', '#ff9800', '#9c27b0', '#00bcd4', '#ffeb3b'];
+        
+        // WAY MORE FIREWORKS! 30 bursts over 6 seconds
+        for (let i = 0; i < 30; i++) {
+            setTimeout(() => {
+                this.createFirework(fireworksContainer, colors);
+            }, i * 200);
+        }
+        
+        // Remove fireworks container after longer animation
+        setTimeout(() => {
+            if (document.body.contains(fireworksContainer)) {
+                document.body.removeChild(fireworksContainer);
+            }
+        }, 6000);
+    }
+    
+    createFirework(container, colors) {
+        const x = Math.random() * window.innerWidth;
+        const y = Math.random() * window.innerHeight * 0.7; // Slightly lower for better coverage
+        
+        // Create BIGGER firework burst with more particles
+        for (let i = 0; i < 20; i++) { // Increased from 12 to 20 particles per burst
+            const firework = document.createElement('div');
+            firework.className = 'firework';
+            firework.style.left = x + 'px';
+            firework.style.top = y + 'px';
+            firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            // Random direction for explosion
+            const angle = (i / 20) * 2 * Math.PI + (Math.random() - 0.5) * 0.5; // Add some randomness
+            const distance = 60 + Math.random() * 120; // Bigger explosions
+            const finalX = x + Math.cos(angle) * distance;
+            const finalY = y + Math.sin(angle) * distance;
+            
+            firework.style.setProperty('--final-x', (finalX - x) + 'px');
+            firework.style.setProperty('--final-y', (finalY - y) + 'px');
+            
+            container.appendChild(firework);
+            
+            // Create MORE sparks per firework
+            setTimeout(() => {
+                for (let j = 0; j < 10; j++) { // Increased from 6 to 10 sparks
+                    const spark = document.createElement('div');
+                    spark.className = 'spark';
+                    spark.style.left = finalX + 'px';
+                    spark.style.top = finalY + 'px';
+                    spark.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    const sparkAngle = Math.random() * 2 * Math.PI;
+                    const sparkDistance = 20 + Math.random() * 60; // Longer spark trails
+                    const sparkX = finalX + Math.cos(sparkAngle) * sparkDistance;
+                    const sparkY = finalY + Math.sin(sparkAngle) * sparkDistance;
+                    
+                    spark.style.setProperty('--spark-x', (sparkX - finalX) + 'px');
+                    spark.style.setProperty('--spark-y', (sparkY - finalY) + 'px');
+                    
+                    container.appendChild(spark);
+                    
+                    setTimeout(() => {
+                        if (spark.parentNode) {
+                            spark.parentNode.removeChild(spark);
+                        }
+                    }, 2500); // Longer spark duration
+                }
+            }, 800);
+            
+            setTimeout(() => {
+                if (firework.parentNode) {
+                    firework.parentNode.removeChild(firework);
+                }
+            }, 5000); // Longer firework duration
+        }
+    }
+    
+    saveToHistory() {
         const gameData = {
             date: new Date().toLocaleDateString(),
             cards: this.boardWidth * this.boardHeight,
             flips: this.flips,
-            efficiency: efficiency,
             timestamp: Date.now()
         };
         
         let history = getGameHistory();
-        history.unshift(gameData); // Add to beginning
+        history.unshift(gameData);
         
-        // Keep only last 50 games
         if (history.length > 50) {
             history = history.slice(0, 50);
         }
@@ -298,9 +405,6 @@ class MemoryGame {
         saveGameHistory(history);
     }
     
-    /**
-     * Reset the game to initial state
-     */
     reset() {
         this.matchedPairs = 0;
         this.flips = 0;
@@ -308,6 +412,64 @@ class MemoryGame {
         this.flippedCards = [];
         this.gameActive = true;
         this.initializeGame();
+    }
+}
+
+// Memory Card Game - UI Management
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+    });
+    
+    document.getElementById(screenId).classList.add('active');
+    
+    if (screenId === 'historyScreen') {
+        loadHistory();
+    }
+}
+
+function startNewGame() {
+    showScreen('gameScreen');
+    if (game) {
+        // Show intro sequence before starting game
+        game.showIntroSequence();
+    }
+}
+
+function closeGameOver() {
+    document.getElementById('gameOver').style.display = 'none';
+}
+
+function exitGame() {
+    if (confirm('Are you sure you want to exit the battle?')) {
+        alert('Thanks for playing! Close this tab to exit.');
+    }
+}
+
+function loadHistory() {
+    const history = getGameHistory();
+    const historyList = document.getElementById('historyList');
+    
+    if (history.length === 0) {
+        historyList.innerHTML = '<div class="no-history">No battles fought yet. Start your first battle to see your history!</div>';
+        return;
+    }
+    
+    historyList.innerHTML = history.map(gameData => `
+        <div class="history-item">
+            <div class="history-date">${gameData.date}</div>
+            <div class="history-stats">
+                <div class="history-stat">Cards: ${gameData.cards}</div>
+                <div class="history-stat">Flips: ${gameData.flips}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function clearHistory() {
+    if (confirm('Are you sure you want to clear your battle history?')) {
+        clearGameHistory();
+        loadHistory();
     }
 }
 
@@ -325,12 +487,39 @@ window.addEventListener('resize', function() {
         const wasLandscape = game.isLandscape;
         game.checkOrientation();
         
-        // Only restart if orientation changed
         if (wasLandscape !== game.isLandscape) {
             game.reset();
         } else {
-            // Just update the board layout
             game.renderBoard();
+        }
+    }
+});
+
+// Handle keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const gameOver = document.getElementById('gameOver');
+        if (gameOver.style.display === 'flex') {
+            closeGameOver();
+        } else {
+            const currentScreen = document.querySelector('.screen.active');
+            if (currentScreen && currentScreen.id !== 'mainMenu') {
+                showScreen('mainMenu');
+            }
+        }
+    }
+    
+    if (e.key === 'Enter') {
+        const currentScreen = document.querySelector('.screen.active');
+        if (currentScreen && currentScreen.id === 'mainMenu') {
+            startNewGame();
+        }
+    }
+    
+    if (e.key.toLowerCase() === 'n') {
+        const currentScreen = document.querySelector('.screen.active');
+        if (currentScreen && currentScreen.id === 'gameScreen') {
+            startNewGame();
         }
     }
 });

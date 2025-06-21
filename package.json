@@ -72,7 +72,8 @@
   },
   "devDependencies": {
     "electron": "^27.0.0",
-    "electron-builder": "^24.6.4"
+    "electron-builder": "^24.6.4",
+	"electron-squirrel-startup": "^1.0.0"
   },
   "dependencies": {},
   "engines": {
